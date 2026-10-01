@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevOps Vote — Satyam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a28;
+      --border: #2a2a40;
+      --accent-a: #00e5ff;
+      --accent-b: #ff1744;
+      --accent-c: #76ff03;
+      --text: #e8e8f0;
+      --muted: #6a6a8a;
+      --glow-a: rgba(0,229,255,0.15);
+      --glow-b: rgba(255,23,68,0.15);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+
+    /* Floating blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      pointer-events: none;
+      animation: float 8s ease-in-out infinite;
+    }
+    .blob-1 { width: 400px; height: 400px; background: var(--accent-a); top: -100px; left: -100px; animation-delay: 0s; }
+    .blob-2 { width: 300px; height: 300px; background: var(--accent-b); bottom: -80px; right: -80px; animation-delay: -4s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, 20px); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 700px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 11px;
+      color: var(--accent-c);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--accent-c);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Header */
+    .header { text-align: center; }
+    .title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--accent-a) 0%, #a78bfa 50%, var(--accent-b) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .subtitle span { color: var(--accent-a); }
+
+    /* Vote card */
+    .vote-card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .vote-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-a), #a78bfa, var(--accent-b));
+    }
+
+    .question {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 32px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .question em {
+      font-style: normal;
+      color: var(--accent-a);
+    }
+
+    /* Buttons */
+    .vote-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .vote-btn {
+      position: relative;
+      border: none;
+      border-radius: 14px;
+      padding: 28px 20px;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .vote-btn:hover { transform: translateY(-3px); }
+    .vote-btn:active { transform: translateY(0); }
+
+    .btn-enjoying {
+      background: linear-gradient(135deg, #003d4d, #005f73);
+      border: 2px solid var(--accent-a);
+      color: var(--accent-a);
+      box-shadow: 0 0 30px rgba(0,229,255,0.1);
+    }
+    .btn-enjoying:hover { box-shadow: 0 0 50px rgba(0,229,255,0.3); }
+
+    .btn-not {
+      background: linear-gradient(135deg, #3d0010, #5f0020);
+      border: 2px solid var(--accent-b);
+      color: var(--accent-b);
+      box-shadow: 0 0 30px rgba(255,23,68,0.1);
+    }
+    .btn-not:hover { box-shadow: 0 0 50px rgba(255,23,68,0.3); }
+
+    .btn-emoji { font-size: 32px; line-height: 1; }
+    .btn-label { font-size: 13px; }
+
+    /* Voted state */
+    .voted-msg {
+      text-align: center;
+      padding: 32px;
+    }
+    .voted-big { font-size: 52px; margin-bottom: 12px; }
+    .voted-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .voted-sub { font-size: 12px; color: var(--muted); }
+
+    /* Footer links */
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--accent-a); }
+    .footer-sep { color: var(--border); }
+
+    /* Scan line overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="container">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Live Voting Active
+    </div>
+
+    <div class="header">
+      <h1 class="title">I am enjoying learning<br/>DevOps with Satyam</h1>
+      <p class="subtitle">Cast your vote · <span>Results update live</span></p>
+    </div>
+
+    <div class="vote-card">
+      {% if vote %}
+        <div class="voted-msg">
+          {% if vote == 'enjoying' %}
+            <div class="voted-big">🚀</div>
+            <div class="voted-text" style="color: var(--accent-a);">You're Enjoying It!</div>
+          {% else %}
+            <div class="voted-big">😤</div>
+            <div class="voted-text" style="color: var(--accent-b);">Not Enjoying It!</div>
+          {% endif %}
+          <div class="voted-sub">Your vote has been recorded · Refresh to change it</div>
+        </div>
+      {% else %}
+        <div class="question">
+          Are you <em>enjoying</em> learning DevOps?
+        </div>
+        <form method="POST">
+          <div class="vote-grid">
+            <button type="submit" name="vote" value="enjoying" class="vote-btn btn-enjoying">
+              <span class="btn-emoji">🚀</span>
+              <span class="btn-label">Enjoying</span>
+            </button>
+            <button type="submit" name="vote" value="not_enjoying" class="vote-btn btn-not">
+              <span class="btn-emoji">😤</span>
+              <span class="btn-label">Not Enjoying</span>
+            </button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="footer-links">
+      <a href="http://localhost:8081" target="_blank">View Results →</a>
+      <span class="footer-sep">|</span>
+      <a href="#">Built with Docker</a>
+      <span class="footer-sep">|</span>
+      <a href="#">Satyam DevOps</a>
+    </div>
+  </div>
+</body>
+</html>

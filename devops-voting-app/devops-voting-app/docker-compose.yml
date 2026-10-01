@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+
+  # ─── REDIS: Message Queue ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: vote_redis
+    networks:
+      - vote-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ─── MYSQL: Persistent Database ───────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: vote_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: votesdb
+      MYSQL_USER: voteuser
+      MYSQL_PASSWORD: votepass
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - vote-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "voteuser", "-pvotepass"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  # ─── VOTE: Python Flask Frontend (port 8080) ──────────────────────────────
+  vote:
+    build: ./vote
+    container_name: vote_app
+    ports:
+      - "8080:5000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - vote-net
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: on-failure
+
+  # ─── WORKER: Background Processor ────────────────────────────────────────
+  worker:
+    build: ./worker
+    container_name: vote_worker
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: voteuser
+      MYSQL_PASSWORD: votepass
+      MYSQL_DB: votesdb
+    networks:
+      - vote-net
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+  # ─── RESULT: Node.js Result Frontend (port 8081) ─────────────────────────
+  result:
+    build: ./result
+    container_name: vote_result
+    ports:
+      - "8081:5001"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: voteuser
+      MYSQL_PASSWORD: votepass
+      MYSQL_DB: votesdb
+    networks:
+      - vote-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: on-failure
+
+# ─── VOLUMES ──────────────────────────────────────────────────────────────
+volumes:
+  mysql-data:
+
+# ─── NETWORKS ─────────────────────────────────────────────────────────────
+networks:
+  vote-net:
+    driver: bridge
